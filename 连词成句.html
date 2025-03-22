@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>连词成句游戏</title>
+    <style>
+        body {
+            background-color: #f5f5dc;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 40px;
+        }
+
+        #game-area {
+            position: relative;
+            min-height: 400px;
+            margin-bottom: 150px;
+        }
+
+        .word-box {
+            position: absolute;
+            padding: 15px 25px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            transition: all 0.3s;
+            border: 2px solid #ddd;
+        }
+
+        #wooden-box {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 80px;
+            background: #8B4513;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            gap: 5px;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+        }
+
+        button {
+            padding: 10px 30px;
+            font-size: 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .shake {
+            animation: shake 0.2s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <h1>中文 301 课堂连词成句</h1>
+    <div id="game-area"></div>
+    <div id="wooden-box"></div>
+    <div class="controls">
+        <button onclick="prevSentence()">上一句</button>
+        <button onclick="nextSentence()">下一句</button>
+    </div>
+
+    <script>
+        const sentences = [
+            ["他们", "十分", "关心", "爱护", "我", "和", "妹妹"],
+            ["只要", "我们", "互相", "理解", "问题", "就", "好", "解决"],
+            ["有时候", "我们", "也", "会", "吵架"],
+            ["我", "认为", "我", "父母", "是", "天下", "最", "好", "的", "父母"]
+        ];
+
+        let currentSentenceIndex = 0;
+        let currentOrder = 0;
+        const colors = ['#FFB6C1', '#87CEFA', '#98FB98', '#DDA0DD', '#FFA07A'];
+        
+        function initGame() {
+            const gameArea = document.getElementById('game-area');
+            gameArea.innerHTML = '';
+            currentOrder = 0;
+            
+            // 创建乱序词语块
+            const shuffledWords = [...sentences[currentSentenceIndex]]
+                .sort(() => Math.random() - 0.5);
+            
+            shuffledWords.forEach((word, index) => {
+                const box = document.createElement('div');
+                box.className = 'word-box';
+                box.textContent = word;
+                box.style.backgroundColor = colors[index % colors.length];
+                box.style.left = `${Math.random() * 80}%`;
+                box.style.top = `${Math.random() * 70}%`;
+                box.dataset.correctOrder = sentences[currentSentenceIndex].indexOf(word);
+                box.onclick = handleClick;
+                gameArea.appendChild(box);
+            });
+        }
+
+        function handleClick(e) {
+            const box = e.target;
+            const correctOrder = parseInt(box.dataset.correctOrder);
+            
+            if (correctOrder === currentOrder) {
+                moveToWoodenBox(box);
+                currentOrder++;
+                
+                if (currentOrder === sentences[currentSentenceIndex].length) {
+                    setTimeout(() => alert("你太棒啦！"), 300);
+                }
+            } else {
+                box.classList.add('shake');
+                setTimeout(() => box.classList.remove('shake'), 200);
+            }
+        }
+
+        function moveToWoodenBox(box) {
+            const woodenBox = document.getElementById('wooden-box');
+            const clone = box.cloneNode(true);
+            clone.style.position = 'static';
+            clone.style.transform = 'none';
+            clone.style.cursor = 'default';
+            woodenBox.appendChild(clone);
+            box.style.opacity = '0';
+        }
+
+        function prevSentence() {
+            if (currentSentenceIndex > 0) {
+                currentSentenceIndex--;
+                resetGame();
+            }
+        }
+
+        function nextSentence() {
+            if (currentSentenceIndex < sentences.length - 1) {
+                currentSentenceIndex++;
+                resetGame();
+            }
+        }
+
+        function resetGame() {
+            document.getElementById('wooden-box').innerHTML = '';
+            initGame();
+        }
+
+        // 初始化第一句
+        initGame();
+    </script>
+</body>
+</html>
