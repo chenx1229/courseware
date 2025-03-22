@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>连词成句游戏</title>
+    <style>
+        body {
+            background-color: #FFF8E7;
+            margin: 0;
+            padding: 20px;
+            font-family: "Microsoft YaHei", sans-serif;
+            min-height: 100vh;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.8em;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #wordArea {
+            position: relative;
+            height: 500px;
+            margin: 30px 0;
+            min-height: 300px;
+        }
+
+        .word-box {
+            position: absolute;
+            background-color: #F0D9B5;
+            border: 3px solid #D4A373;
+            border-radius: 12px;
+            padding: 18px 30px;
+            font-size: 1.8em;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 5px 5px 10px rgba(0,0,0,0.15),
+                        inset 0 -3px 5px rgba(0,0,0,0.1);
+            transition: all 0.4s;
+            white-space: nowrap;
+        }
+
+        .wooden-box {
+            width: 85%;
+            height: 100px;
+            background: #8B4513;
+            margin: 30px auto;
+            border-radius: 0 0 15px 15px;
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            box-shadow: inset 0 4px 8px rgba(0,0,0,0.2);
+            gap: 0;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 40px;
+        }
+
+        button {
+            background-color: #D4A373;
+            border: none;
+            padding: 15px 40px;
+            margin: 0 20px;
+            border-radius: 8px;
+            font-size: 1.3em;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            letter-spacing: 2px;
+        }
+
+        button:hover {
+            background-color: #B08C69;
+            transform: translateY(-2px);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .shake {
+            animation: shake 0.4s ease-in-out;
+        }
+    </style>
+</head>
+<body>
+    <h1>中文 201 课堂连词成句</h1>
+    <div id="wordArea"></div>
+    <div class="wooden-box"></div>
+    <div class="controls">
+        <button onclick="prevSentence()">上一句</button>
+        <button onclick="nextSentence()">下一句</button>
+    </div>
+
+    <script>
+        const sentences = [
+            ["今天", "晴天，", "气温", "在", "十五到二十度。"],
+            ["北京", "的", "秋天", "天气", "最好。"],
+            ["他们", "会", "在那儿", "住", "一个星期。"],
+            ["我", "喜欢", "去", "海边", "游泳", "晒太阳。"],
+            ["暑假", "从", "七月二十号", "开始。"]
+        ];
+
+        let currentSentence = 0;
+        let correctOrder = [];
+        let clickedOrder = [];
+        let placedPositions = [];
+
+        function initGame() {
+            const wordArea = document.getElementById('wordArea');
+            const woodenBox = document.querySelector('.wooden-box');
+            
+            // 清空所有区域
+            wordArea.innerHTML = '';
+            woodenBox.innerHTML = '';
+            clickedOrder = [];
+            placedPositions = [];
+            
+            // 生成乱序词语
+            const shuffledWords = [...sentences[currentSentence]]
+                .sort(() => Math.random() - 0.5);
+            correctOrder = sentences[currentSentence];
+
+            // 创建词语块
+            shuffledWords.forEach((word, index) => {
+                const box = document.createElement('div');
+                box.className = 'word-box';
+                box.textContent = word;
+                box.style.backgroundColor = `hsl(${index * 55}, 65%, 85%)`;
+                box.onclick = handleClick;
+                
+                // 智能布局防止重叠
+                let safePosition = findSafePosition(box);
+                box.style.left = `${safePosition.x}%`;
+                box.style.top = `${safePosition.y}%`;
+                
+                wordArea.appendChild(box);
+            });
+        }
+
+        function findSafePosition(element) {
+            const maxAttempts = 100;
+            let attempt = 0;
+            
+            while (attempt < maxAttempts) {
+                const x = Math.random() * 75;
+                const y = Math.random() * 65;
+                const collision = placedPositions.some(pos => {
+                    return Math.abs(x - pos.x) < 15 && Math.abs(y - pos.y) < 15;
+                });
+                
+                if (!collision) {
+                    placedPositions.push({x, y});
+                    return {x, y};
+                }
+                attempt++;
+            }
+            return {x: Math.random() * 75, y: Math.random() * 65};
+        }
+
+        function handleClick(e) {
+            const box = e.target;
+            if (box.parentElement.id !== 'wordArea') return;
+
+            const currentWord = box.textContent;
+            const expectedWord = correctOrder[clickedOrder.length];
+
+            if (currentWord === expectedWord) {
+                moveToWoodenBox(box);
+                clickedOrder.push(currentWord);
+                checkComplete();
+            } else {
+                box.classList.add('shake');
+                setTimeout(() => box.classList.remove('shake'), 400);
+            }
+        }
+
+        function moveToWoodenBox(element) {
+            const woodenBox = document.querySelector('.wooden-box');
+            element.style.position = 'relative';
+            element.style.left = '0';
+            element.style.top = '0';
+            element.style.margin = '0 -3px';
+            element.style.cursor = 'default';
+            woodenBox.appendChild(element);
+        }
+
+        function checkComplete() {
+            if (clickedOrder.length === correctOrder.length) {
+                setTimeout(() => {
+                    alert('你太棒啦！\n完整句子：' + correctOrder.join(''));
+                }, 300);
+            }
+        }
+
+        function prevSentence() {
+            if (currentSentence > 0) {
+                currentSentence--;
+                initGame();
+            }
+        }
+
+        function nextSentence() {
+            if (currentSentence < sentences.length - 1) {
+                currentSentence++;
+                initGame();
+            }
+        }
+
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>
