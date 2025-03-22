@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>连词成句游戏</title>
+    <style>
+        body {
+            background-color: #fff8e7;
+            margin: 0;
+            padding: 20px;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a4a4a;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #gameArea {
+            position: relative;
+            height: 400px;
+            margin: 30px 0;
+            border: 3px dashed #e0d6c2;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .word-box {
+            position: absolute;
+            min-width: 120px;
+            height: 60px;
+            background: #fff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
+            transform: perspective(500px) rotateX(15deg);
+            box-sizing: border-box;
+            padding: 0 15px;
+            border: 2px solid rgba(0,0,0,0.1);
+        }
+
+        #woodBox {
+            width: 80%;
+            height: 80px;
+            margin: 20px auto;
+            background: #8b4513;
+            border-radius: 0 0 15px 15px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 40px;
+            margin: 0 25px;
+            font-size: 20px;
+            background: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            background: #449d44;
+            transform: translateY(-2px);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+
+        .shake {
+            animation: shake 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>中文 301 课堂 连词成句</h1>
+    <div id="gameArea"></div>
+    <div id="woodBox"></div>
+    <div class="controls">
+        <button onclick="prevSentence()">上一句</button>
+        <button onclick="nextSentence()">下一句</button>
+    </div>
+
+    <script>
+        const sentences = [
+            ["中国", "是", "世界", "四大文明古国", "之一"],
+            ["你", "想买", "什么", "就能买", "到", "什么"],
+            ["香港", "既是", "美食天堂", "又是", "购物天堂"],
+            ["听说", "你", "参加了", "一个", "汉语短训班"],
+            ["只要", "坚持", "下去", "，", "你的汉语", "就", "一定会有", "更大的", "进步"]
+        ];
+
+        let currentSentenceIndex = 0;
+        let currentOrder = [];
+
+        function measureTextSize(word) {
+            const temp = document.createElement('div');
+            temp.style.cssText = `
+                position: absolute;
+                visibility: hidden;
+                white-space: nowrap;
+                font-size: 24px;
+                font-weight: bold;
+                padding: 0 15px;
+                min-width: 120px;
+                height: 60px;
+                box-sizing: border-box;
+            `;
+            temp.textContent = word;
+            document.body.appendChild(temp);
+            const size = temp.getBoundingClientRect();
+            document.body.removeChild(temp);
+            return size;
+        }
+
+        function getValidPosition(gameArea, width, height, existing) {
+            const padding = 20;
+            for (let attempt = 0; attempt < 100; attempt++) {
+                const x = Math.random() * (gameArea.clientWidth - width);
+                const y = Math.random() * (gameArea.clientHeight - height);
+                
+                let valid = true;
+                for (const pos of existing) {
+                    if (x < pos.x + pos.w + padding && 
+                        x + width + padding > pos.x &&
+                        y < pos.y + pos.h + padding &&
+                        y + height + padding > pos.y) {
+                        valid = false;
+                        break;
+                    }
+                }
+                
+                if (valid) return { x, y };
+            }
+            return { 
+                x: Math.random() * (gameArea.clientWidth - width),
+                y: Math.random() * (gameArea.clientHeight - height)
+            };
+        }
+
+        function initGame() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = '';
+            document.getElementById('woodBox').innerHTML = '';
+            currentOrder = [];
+            
+            const words = [...sentences[currentSentenceIndex]];
+            shuffleArray(words);
+            const existingPositions = [];
+
+            words.forEach((word, index) => {
+                const size = measureTextSize(word);
+                const pos = getValidPosition(gameArea, size.width, size.height, existingPositions);
+                
+                const box = document.createElement('div');
+                box.className = 'word-box';
+                box.textContent = word;
+                box.style.left = `${pos.x}px`;
+                box.style.top = `${pos.y}px`;
+                box.style.backgroundColor = `hsl(${index * 60}, 70%, 85%)`;
+                box.onclick = () => handleClick(word, box);
+                
+                gameArea.appendChild(box);
+                existingPositions.push({ x: pos.x, y: pos.y, w: size.width, h: size.height });
+            });
+        }
+
+        function handleClick(word, box) {
+            const correctOrder = sentences[currentSentenceIndex];
+            const expectedWord = correctOrder[currentOrder.length];
+            
+            if (word === expectedWord) {
+                box.style.position = 'static';
+                box.style.transform = 'none';
+                box.style.cursor = 'default';
+                box.style.margin = '0 3px';
+                document.getElementById('woodBox').appendChild(box);
+                currentOrder.push(word);
+                
+                if (currentOrder.length === correctOrder.length) {
+                    setTimeout(() => {
+                        alert('你太棒啦！');
+                        box.style.boxShadow = 'none';
+                    }, 300);
+                }
+            } else {
+                box.classList.add('shake');
+                setTimeout(() => box.classList.remove('shake'), 400);
+            }
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function prevSentence() {
+            if (currentSentenceIndex > 0) {
+                currentSentenceIndex--;
+                initGame();
+            }
+        }
+
+        function nextSentence() {
+            if (currentSentenceIndex < sentences.length - 1) {
+                currentSentenceIndex++;
+                initGame();
+            }
+        }
+
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>
