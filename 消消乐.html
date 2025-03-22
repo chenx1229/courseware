@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>中英文消消乐</title>
+    <style>
+        body {
+            background-color: #f5f5dc;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 40px;
+        }
+
+        #game-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .bubble {
+            width: 120px;
+            height: 120px;
+            background-color: #ff9999;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 20px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .bubble:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 20px rgba(0,0,0,0.3);
+        }
+
+        .selected {
+            border: 3px solid #333;
+        }
+
+        #message {
+            text-align: center;
+            font-size: 2em;
+            color: #4CAF50;
+            margin-top: 30px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>中文 301 课堂消消乐</h1>
+    <div id="game-container"></div>
+    <div id="message">恭喜你挑战成功！</div>
+
+    <script>
+        const wordPairs = {
+            "时尚": "fashon",
+            "影响": "influence",
+            "提醒": "remind",
+            "诚实": "honest",
+            "烦恼": "upset",
+            "解决": "solve",
+            "不断": "continuously",
+            "知识": "knowledge"
+        };
+
+        let selectedBubble = null;
+        let gameCount = 0;
+        const colors = ['#ff9999', '#99ff99', '#9999ff', '#ffcc99', '#cc99ff', '#99ffcc', '#ff99cc', '#ccff99'];
+
+        function createGame() {
+            const container = document.getElementById('game-container');
+            const allWords = [];
+            
+            // 创建中英文泡泡
+            Object.entries(wordPairs).forEach(([ch, en], index) => {
+                allWords.push({
+                    text: ch,
+                    pair: en,
+                    color: colors[index % colors.length]
+                });
+                allWords.push({
+                    text: en,
+                    pair: ch,
+                    color: colors[index % colors.length]
+                });
+            });
+
+            // 打乱顺序
+            allWords.sort(() => Math.random() - 0.5);
+
+            // 生成泡泡
+            allWords.forEach(word => {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.textContent = word.text;
+                bubble.style.backgroundColor = word.color;
+                bubble.dataset.pair = word.pair;
+                bubble.addEventListener('click', handleClick);
+                container.appendChild(bubble);
+            });
+        }
+
+        function handleClick(event) {
+            const currentBubble = event.target;
+            
+            if (!selectedBubble) {
+                // 第一次点击
+                selectedBubble = currentBubble;
+                currentBubble.classList.add('selected');
+            } else {
+                // 第二次点击
+                const isPair = (selectedBubble.textContent === currentBubble.dataset.pair) ||
+                              (currentBubble.textContent === selectedBubble.dataset.pair);
+
+                if (isPair) {
+                    selectedBubble.style.opacity = '0';
+                    currentBubble.style.opacity = '0';
+                    gameCount += 2;
+                    checkGameEnd();
+                } else {
+                    selectedBubble.classList.remove('selected');
+                }
+                
+                selectedBubble = null;
+            }
+        }
+
+        function checkGameEnd() {
+            if (gameCount === Object.keys(wordPairs).length * 2) {
+                document.getElementById('message').style.display = 'block';
+            }
+        }
+
+        // 初始化游戏
+        createGame();
+    </script>
+</body>
+</html>
