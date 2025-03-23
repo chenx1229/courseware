@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>连词成句游戏</title>
+    <style>
+        body {
+            background-color: #fff8e7;
+            margin: 0;
+            padding: 20px;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4a4a4a;
+            margin: 20px 0;
+            font-size: 2.8em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #gameArea {
+            position: relative;
+            height: 400px;
+            margin: 30px 0;
+            border: 3px dashed #e0d6c2;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .word-box {
+            position: absolute;
+            min-width: 140px;
+            height: 70px;
+            background: #fff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.4s;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+            transform: perspective(600px) rotateX(15deg) rotateZ(-2deg);
+            border: 3px solid rgba(0,0,0,0.1);
+            padding: 0 20px;
+        }
+
+        #woodBox {
+            width: 85%;
+            height: 90px;
+            margin: 25px auto;
+            background: #8b4513;
+            border-radius: 0 0 15px 15px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+        }
+
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        button {
+            padding: 15px 45px;
+            margin: 0 30px;
+            font-size: 22px;
+            background: linear-gradient(145deg, #5cb85c, #449d44);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 3px 3px 8px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 5px 5px 12px rgba(0,0,0,0.3);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-12px); }
+            75% { transform: translateX(12px); }
+        }
+
+        .shake {
+            animation: shake 0.4s ease;
+        }
+    </style>
+</head>
+<body>
+    <h1>中文 301 课堂 连词成句</h1>
+    <div id="gameArea"></div>
+    <div id="woodBox"></div>
+    <div class="controls">
+        <button onclick="prevSentence()">上一句</button>
+        <button onclick="nextSentence()">下一句</button>
+    </div>
+
+    <script>
+        const sentences = [
+            ["我们家", "早饭", "以", "西餐", "为", "主"],
+            ["中国", "的", "南方人", "和", "北方人", "在", "饮食习惯", "上", "很", "不同"],
+            ["早餐", "的", "种类", "特别", "多"],
+            ["煎饼果子", "是", "一种", "北方", "的", "早餐"],
+            ["很多", "南方人", "一日三餐", "都", "离不开", "米食"]
+        ];
+
+        let currentSentenceIndex = 0;
+        let currentOrder = [];
+
+        // 智能布局算法
+        function calculatePositions(count, containerWidth, containerHeight) {
+            const positions = [];
+            const cols = Math.ceil(Math.sqrt(count));
+            const rows = Math.ceil(count / cols);
+            const cellWidth = containerWidth / cols;
+            const cellHeight = containerHeight / rows;
+
+            for (let i = 0; i < count; i++) {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const x = col * cellWidth + (Math.random() * cellWidth * 0.3);
+                const y = row * cellHeight + (Math.random() * cellHeight * 0.3);
+                positions.push({ x, y });
+            }
+            return positions;
+        }
+
+        function initGame() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = '';
+            document.getElementById('woodBox').innerHTML = '';
+            currentOrder = [];
+            
+            const words = [...sentences[currentSentenceIndex]];
+            shuffleArray(words);
+
+            const positions = calculatePositions(
+                words.length,
+                gameArea.clientWidth,
+                gameArea.clientHeight
+            );
+
+            words.forEach((word, index) => {
+                const box = document.createElement('div');
+                box.className = 'word-box';
+                box.textContent = word;
+                box.style.left = `${positions[index].x}px`;
+                box.style.top = `${positions[index].y}px`;
+                box.style.backgroundColor = `hsl(${index * 55}, 75%, 85%)`;
+                box.style.transform += ` rotate(${Math.random() * 8 - 4}deg)`;
+                box.onclick = () => handleClick(word, box);
+                gameArea.appendChild(box);
+            });
+        }
+
+        function handleClick(word, box) {
+            const correctOrder = sentences[currentSentenceIndex];
+            
+            if (word === correctOrder[currentOrder.length]) {
+                box.style.transform = 'rotate(0deg)';
+                box.animate([
+                    { transform: box.style.transform },
+                    { transform: 'translateY(100px) scale(0.9)' }
+                ], {
+                    duration: 500,
+                    easing: 'ease-in-out'
+                });
+                
+                setTimeout(() => {
+                    box.style.position = 'static';
+                    box.style.margin = '0 5px';
+                    document.getElementById('woodBox').appendChild(box);
+                }, 500);
+
+                currentOrder.push(word);
+                
+                if (currentOrder.length === correctOrder.length) {
+                    setTimeout(() => {
+                        alert('你太棒啦！');
+                        document.querySelectorAll('.word-box').forEach(b => b.style.boxShadow = 'none');
+                    }, 600);
+                }
+            } else {
+                box.classList.add('shake');
+                setTimeout(() => box.classList.remove('shake'), 400);
+            }
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+        }
+
+        function prevSentence() {
+            if (currentSentenceIndex > 0) {
+                currentSentenceIndex--;
+                initGame();
+            }
+        }
+
+        function nextSentence() {
+            if (currentSentenceIndex < sentences.length - 1) {
+                currentSentenceIndex++;
+                initGame();
+            }
+        }
+
+        // 初始化游戏
+        initGame();
+        window.addEventListener('resize', initGame);
+    </script>
+</body>
+</html>
