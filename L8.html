@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>连词成句游戏</title>
+    <style>
+        body {
+            background-color: #f5f5dc;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+
+        #gameArea {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            min-height: 200px;
+            margin-bottom: 100px;
+        }
+
+        .word-box {
+            background: #f0f0f0;
+            border: 3px solid #d4d4d4;
+            border-radius: 8px;
+            padding: 15px 25px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 3px 3px 5px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .wood-box {
+            width: 80%;
+            height: 80px;
+            background: #8b4513;
+            margin: 20px auto;
+            border-radius: 5px;
+            position: relative;
+            box-shadow: inset 0 0 10px #5a2d0c;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 12px 30px;
+            margin: 0 15px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .vibration {
+            animation: vibration 0.3s linear;
+        }
+
+        @keyframes vibration {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <h1>中文 301 课堂 连词成句</h1>
+    <div id="gameArea"></div>
+    <div class="wood-box" id="woodBox"></div>
+    <div class="controls">
+        <button onclick="prevSentence()">上一句</button>
+        <button onclick="nextSentence()">下一句</button>
+    </div>
+
+    <script>
+        const sentences = [
+            "青少年/需要/足够的/能量和营养。",
+            "不吃早餐/对/身体健康/非常不利。",
+            "人们/每天吃的/食物/主要分/四大类。",
+            "只有/吃好早餐，/上课时/才能/集中精力/学习。",
+            "合理的饮食/就是/要吃/营养丰富、/均衡的/食物。"
+        ];
+
+        let currentSentence = 0;
+        let correctOrder = [];
+        let currentSelected = [];
+
+        function initGame() {
+            const words = sentences[currentSentence].split('/');
+            correctOrder = words;
+            
+            // 打乱顺序
+            const shuffledWords = [...words].sort(() => Math.random() - 0.5);
+            
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = '';
+            
+            shuffledWords.forEach((word, index) => {
+                const box = document.createElement('div');
+                box.className = 'word-box';
+                box.textContent = word;
+                box.dataset.index = index;
+                box.style.backgroundColor = `hsl(${index * 60}, 70%, 85%)`;
+                box.onclick = handleWordClick;
+                gameArea.appendChild(box);
+            });
+        }
+
+        function handleWordClick(e) {
+            const clickedWord = e.target.textContent;
+            const expectedWord = correctOrder[currentSelected.length];
+            
+            if (clickedWord === expectedWord) {
+                moveToWoodBox(e.target);
+                currentSelected.push(clickedWord);
+                
+                if (currentSelected.length === correctOrder.length) {
+                    setTimeout(() => alert('你太棒啦！'), 300);
+                }
+            } else {
+                e.target.classList.add('vibration');
+                setTimeout(() => e.target.classList.remove('vibration'), 300);
+            }
+        }
+
+        function moveToWoodBox(element) {
+            const woodBox = document.getElementById('woodBox');
+            const clone = element.cloneNode(true);
+            clone.style.margin = '0 5px';
+            clone.style.cursor = 'default';
+            clone.onclick = null;
+            woodBox.appendChild(clone);
+            element.style.visibility = 'hidden';
+        }
+
+        function prevSentence() {
+            if (currentSentence > 0) {
+                currentSentence--;
+                resetGame();
+            }
+        }
+
+        function nextSentence() {
+            if (currentSentence < sentences.length - 1) {
+                currentSentence++;
+                resetGame();
+            } else {
+                alert('游戏结束！');
+            }
+        }
+
+        function resetGame() {
+            currentSelected = [];
+            document.getElementById('woodBox').innerHTML = '';
+            initGame();
+        }
+
+        // 初始化游戏
+        initGame();
+    </script>
+</body>
+</html>
