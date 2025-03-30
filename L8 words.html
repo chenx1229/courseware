@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>中英文配对消消乐</title>
+    <style>
+        body {
+            background-color: #f5f5dc;
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+        }
+
+        #gameArea {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            justify-content: center;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .bubble {
+            background: #fff;
+            border-radius: 50%;
+            padding: 20px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+            user-select: none;
+        }
+
+        .bubble:hover {
+            transform: scale(1.05);
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .selected {
+            border: 3px solid #ffeb3b;
+            box-shadow: 0 0 10px #ffeb3b;
+        }
+
+        .matched {
+            animation: fadeOut 0.5s forwards;
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0); }
+        }
+
+        .vibration {
+            animation: vibration 0.3s linear;
+        }
+
+        @keyframes vibration {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <h1>中文 301 课堂 消消乐</h1>
+    <div id="gameArea"></div>
+
+    <script>
+        const wordPairs = [
+            { ch: '属于', en: 'belong to' },
+            { ch: '按照', en: 'according to' },
+            { ch: '充足', en: 'sufficient' },
+            { ch: '能量', en: 'energy' },
+            { ch: '保证', en: 'guarantee' },
+            { ch: '营养', en: 'nutrition' },
+            { ch: '均衡', en: 'balance' },
+            { ch: '集中', en: 'concentrate' },
+            { ch: '蛋白质', en: 'protein' },
+            { ch: '维他命', en: 'vitamin' }
+        ];
+
+        let selectedBubble = null;
+
+        function generateColors(pairIndex) {
+            const hue = (pairIndex * 36) % 360;
+            return {
+                chColor: `hsl(${hue}, 70%, 75%)`,
+                enColor: `hsl(${hue + 180}, 70%, 75%)`
+            };
+        }
+
+        function createBubbles() {
+            const gameArea = document.getElementById('gameArea');
+            gameArea.innerHTML = '';
+
+            const bubbles = [];
+            wordPairs.forEach((pair, index) => {
+                const colors = generateColors(index);
+                
+                // 创建中文泡泡
+                const chBubble = document.createElement('div');
+                chBubble.className = 'bubble';
+                chBubble.textContent = pair.ch;
+                chBubble.dataset.pairId = index;
+                chBubble.dataset.type = 'ch';
+                chBubble.style.backgroundColor = colors.chColor;
+
+                // 创建英文泡泡
+                const enBubble = document.createElement('div');
+                enBubble.className = 'bubble';
+                enBubble.textContent = pair.en;
+                enBubble.dataset.pairId = index;
+                enBubble.dataset.type = 'en';
+                enBubble.style.backgroundColor = colors.enColor;
+
+                bubbles.push(chBubble, enBubble);
+            });
+
+            // 随机打乱顺序
+            bubbles.sort(() => Math.random() - 0.5);
+
+            // 添加泡泡到游戏区域
+            bubbles.forEach(bubble => {
+                gameArea.appendChild(bubble);
+                bubble.addEventListener('click', handleBubbleClick);
+            });
+        }
+
+        function handleBubbleClick(e) {
+            const currentBubble = e.target;
+            if (currentBubble.classList.contains('matched')) return;
+
+            if (!selectedBubble) {
+                // 第一次点击
+                selectedBubble = currentBubble;
+                currentBubble.classList.add('selected');
+            } else {
+                // 第二次点击
+                const firstPairId = selectedBubble.dataset.pairId;
+                const firstType = selectedBubble.dataset.type;
+                const secondPairId = currentBubble.dataset.pairId;
+                const secondType = currentBubble.dataset.type;
+
+                if (firstPairId === secondPairId && firstType !== secondType) {
+                    // 配对成功
+                    selectedBubble.classList.add('matched');
+                    currentBubble.classList.add('matched');
+                    selectedBubble.classList.remove('selected');
+                    selectedBubble = null;
+
+                    // 检查游戏是否完成
+                    const remaining = document.querySelectorAll('.bubble:not(.matched)');
+                    if (remaining.length === 0) {
+                        setTimeout(() => alert('恭喜你挑战成功！'), 500);
+                    }
+                } else {
+                    // 配对失败
+                    selectedBubble.classList.remove('selected');
+                    selectedBubble.classList.add('vibration');
+                    currentBubble.classList.add('vibration');
+                    setTimeout(() => {
+                        selectedBubble.classList.remove('vibration');
+                        currentBubble.classList.remove('vibration');
+                    }, 300);
+                    selectedBubble = null;
+                }
+            }
+        }
+
+        // 初始化游戏
+        createBubbles();
+    </script>
+</body>
+</html>
